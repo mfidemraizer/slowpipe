@@ -1,0 +1,25 @@
+{
+  "name": "slowpipe",
+  "version": "0.1.0",
+  "description": "Simple functional programming piping using generators",
+  "author": "Matías Fidemraizer",
+  "license": {
+    "type": "Apache-2.0",
+    "url": "https://opensource.org/licenses/apache2.0.php"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mfidemraizer/slowpipe"
+  },
+  "scripts": {
+    "debug-test": "babel-node ./spec/run.js --presets env --inspect",
+    "test": "babel-node ./spec/run.js --presets env --inspect"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "babel-preset-env": "^1.6.0",
+    "jasmine": "^2.8.0",
+    "jasmine-console-reporter": "^2.0.1"
+  }
+}
