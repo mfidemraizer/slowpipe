@@ -1,5 +1,5 @@
 import { invokeNextPromise } from "./shared"
- 
+
 /**
  * Pipes many functions. That is, the result of a function is/are the input parameter(s) on the next one.
  * 

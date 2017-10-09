@@ -1,2 +1,4 @@
-export const invokeNext = (current, result) => Array.isArray(result) ? current(...result) : current(result)
-export const invokeNextPromise = (promise, fun) => promise.then((...args) => fun(...args))
+export const
+    whenFun = (value, doStuff) => value instanceof Function ? doStuff(value) : false,
+
+    invokeNextPromise = (promise, fun) => whenFun(fun, () => promise.then((...args) => fun(args[0]))) || promise

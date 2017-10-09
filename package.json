@@ -13,7 +13,7 @@
   },
   "scripts": {
     "debug-test": "babel-node ./spec/run.js --presets env --inspect",
-    "test": "babel-node ./spec/run.js --presets env --inspect"
+    "test": "babel-node ./spec/run.js --presets env --blacklist regenerator --inspect"
   },
   "author": "",
   "license": "ISC",
