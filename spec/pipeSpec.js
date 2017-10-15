@@ -1,17 +1,17 @@
 import pipe from "../src/pipe"
-import pipeP from "../src/pipeP"
 import { interceptors } from "../src/symbols"
 
 describe("Synchronous piping with 'pipe'", () => {
     it("calculation should return 10", () => {
-        const sum = (x, y) => x + y,
+        const
+            sum = (x, y) => x + y,
             divideBy2 = x => x / 2,
-            multiplyBy2 = x => x * 4,
+            multiplyBy4 = x => x * 4,
 
             calc = pipe(function* () {
                 yield sum
                 yield divideBy2
-                yield multiplyBy2
+                yield multiplyBy4
             }),
 
             result = calc(3, 2)
@@ -20,16 +20,17 @@ describe("Synchronous piping with 'pipe'", () => {
     })
 
     it("can do calculation with subpiping and return 1000", () => {
-        const sum = (x, y) => x + y,
+        const
+            sum = (x, y) => x + y,
             divideBy2 = x => x / 2,
-            multiplyBy2 = x => x * 4,
+            multiplyBy4 = x => x * 4,
             multiplyBy10 = x => x * 10,
 
             calc = pipe(function* () {
                 yield sum
                 yield (
                     yield divideBy2,
-                    yield multiplyBy2,
+                    yield multiplyBy4,
                     yield (
                         yield multiplyBy10,
                         yield multiplyBy10
@@ -59,14 +60,15 @@ describe("Synchronous piping with 'pipe'", () => {
             }
         }]
 
-        const sum = (x, y) => x + y,
+        const
+            sum = (x, y) => x + y,
             divideBy2 = x => x / 2,
-            multiplyBy2 = x => x * 4,
+            multiplyBy4 = x => x * 4,
 
             calc = pipe(function* () {
                 yield sum
                 yield divideBy2
-                yield multiplyBy2
+                yield multiplyBy4
             }),
 
             result = calc(3, 2)
@@ -79,16 +81,35 @@ describe("Synchronous piping with 'pipe'", () => {
 
 describe("Asynchronous piping with 'pipeP'", () => {
     it("calculation should return 10", done => {
-        const sumAsync = (x, y) => Promise.resolve(x + y),
+        const
+            sumAsync = (x, y) => Promise.resolve(x + y),
             divideBy2Async = x => Promise.resolve(x / 2),
-            multiplyBy2Async = x => Promise.resolve(x * 4),
+            multiplyBy4Async = x => Promise.resolve(x * 4),
+
+            calcAsync = pipe(function* () {
+                yield sumAsync
+                yield divideBy2Async
+                yield multiplyBy4Async
+            })
+
+        calcAsync(3, 2).then(result => {
+            expect(result).toBe(10)
+            done()
+        })
+    })
+
+    it("can do calculation with subpiping and return 1000", done => {
+        const
+            sumAsync = (x, y) => Promise.resolve(x + y),
+            divideBy2Async = x => Promise.resolve(x / 2),
+            multiplyBy4Async = x => Promise.resolve(x * 4),
             multiplyBy10Async = x => Promise.resolve(x * 10),
 
-            calcAsync = pipeP(function* () {
+            calcAsync = pipe(function* () {
                 yield sumAsync
                 yield (
                     yield divideBy2Async,
-                    yield multiplyBy2Async,
+                    yield multiplyBy4Async,
                     yield (
                         yield multiplyBy10Async,
                         yield multiplyBy10Async
@@ -101,19 +122,26 @@ describe("Asynchronous piping with 'pipeP'", () => {
             done()
         })
     })
+})
 
-    it("can do calculation with subpiping and return 1000", done => {
-        const sumAsync = (x, y) => Promise.resolve(x + y),
-            divideBy2Async = x => Promise.resolve(x / 2),
-            multiplyBy2Async = x => Promise.resolve(x * 4),
+describe("Mixed synchronous and asynchronous piping", () => {
+    it("always return a promise and the expected result of 10", () => {
+        const
+            sumAsync = (x, y) => Promise.resolve(x + y),
+            divideBy2 = x => x / 2,
+            multiplyBy4Async = x => Promise.resolve(x * 4),
 
-            calcAsync = pipeP(function* () {
+            calcAsync = pipe(function* () {
                 yield sumAsync
-                yield divideBy2Async
-                yield multiplyBy2Async
-            })
+                yield multiplyBy4Async
+                yield divideBy2
+            }),
 
-        calcAsync(3, 2).then(result => {
+            result = calcAsync(3, 2)
+
+        expect(result instanceof Promise).toBeTruthy()
+
+        result.then(result => {
             expect(result).toBe(10)
             done()
         })

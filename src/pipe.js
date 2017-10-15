@@ -1,5 +1,5 @@
 import { nil, interceptors } from "./symbols"
-import { whenFun } from "./shared"
+import { isFun, isPromise, isArray, when, then, callUnary, apply } from "./shared"
 
 const
     interceptEnter = (pipeInterceptors, funOrValue, args) => typeof pipeInterceptors == "undefined" ? nil :
@@ -7,7 +7,7 @@ const
             if (!next.hasOwnProperty("enter"))
                 return { funOrValue, args }
 
-            if (previous === nil)
+            if (previous == nil)
                 return next.enter(funOrValue, args)
             else {
                 const { funOrValue, args } = previous
@@ -21,7 +21,7 @@ const
             if (!next.hasOwnProperty("exit"))
                 return { funOrValue, args, result }
 
-            if (previous === nil)
+            if (previous == nil)
                 return next.exit(funOrValue, args, result)
             else {
                 const { funOrValue, arg, result } = previous
@@ -30,7 +30,14 @@ const
             }
         }, nil),
 
-    invokeNext = (fun, result) => whenFun(fun, () => fun(result)) || result,
+    invokeNext = (fun, result) => {
+        const callFun = arg => when(isArray)(apply(fun))(arg) || fun(arg)
+        const resultIsPromise = () => isPromise(result[0])
+
+        return when(isFun)(
+            () => when(resultIsPromise)(apply(then(callFun)))(result) || callFun(result)
+        )(fun) || result[0]
+    },
 
     /**
      * Pipes many functions. That is, the result of a function is/are the input parameter(s) on the next one.
@@ -52,46 +59,29 @@ const
      * calc(3, 2) // outs '8.34'
      */
     pipe = gen => (...args) => {
-        const
-            pipeInterceptors = pipe[interceptors],
-            iterator = gen()
+        let result = undefined,
+            isFirst = true
 
-        let funOrValue = iterator.next().value
+        for (let funOrValue of gen()) {
+            result = isFirst ? args : [result]
 
-        const interceptEnterResult = interceptEnter(pipeInterceptors, funOrValue, args)
-
-        let result = undefined
-
-        if (interceptEnterResult != nil) {
-            funOrValue = interceptEnterResult.funOrValue
-            args = interceptEnterResult.args
-        }
-
-        if (funOrValue instanceof Function)
-            result = funOrValue(...args)
-        else
-            result = args
-
-        const interceptExitResult = interceptExit(pipeInterceptors, funOrValue, args, result)
-
-        if (interceptExitResult != nil)
-            result = interceptExitResult
-
-        for (funOrValue of iterator) {
-            const interceptEnterResult = interceptEnter(pipeInterceptors, funOrValue, [result])
+            const interceptEnterResult = interceptEnter(pipe[interceptors], funOrValue, result)
 
             if (interceptEnterResult != nil) {
                 funOrValue = interceptEnterResult.funOrValue
-                [result] = interceptEnterResult.args
+                result = interceptEnterResult.args
             }
 
             const oldResult = result
+            debugger
             result = invokeNext(funOrValue, result)
 
-            const interceptExitResult = interceptExit(pipeInterceptors, funOrValue, [oldResult], result)
-            debugger
+            const interceptExitResult = interceptExit(pipe[interceptors], funOrValue, oldResult, result)
+
             if (interceptExitResult != nil)
                 result = interceptExitResult
+
+            isFirst = false
         }
 
         return result
