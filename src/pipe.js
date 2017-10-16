@@ -1,5 +1,5 @@
 import { nil, interceptors } from "./symbols"
-import { isFun, isPromise, isArray, when, then, callUnary, apply } from "./shared"
+import { isFun, isPromise, isArray, ifElse, first, then, apply } from "./shared"
 
 const
     interceptEnter = (pipeInterceptors, funOrValue, args) => typeof pipeInterceptors == "undefined" ? nil :
@@ -30,13 +30,17 @@ const
             }
         }, nil),
 
-    invokeNext = (fun, result) => {
-        const callFun = arg => when(isArray)(apply(fun))(arg) || fun(arg)
-        const resultIsPromise = () => isPromise(result[0])
+    invokeNext = (item, result) => {
+        const
+            itemIsFun = () => isFun(item),
+            resultIsPromise = apply(isPromise),
+            call = fun => arg => ifElse(isArray)(apply(fun))(fun)(arg),
+            thenCall = fun => apply(then(call(fun)))
 
-        return when(isFun)(
-            () => when(resultIsPromise)(apply(then(callFun)))(result) || callFun(result)
-        )(fun) || result[0]
+
+        return ifElse(itemIsFun)(
+            ifElse(resultIsPromise)(thenCall(item))(call(item))
+        )(first)(result)
     },
 
     /**
