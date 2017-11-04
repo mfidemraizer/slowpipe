@@ -1,32 +1,34 @@
 import pipe from "../src/pipe"
 import { interceptors } from "../src/symbols"
+import { chain } from "../src/shared"
+import S from "sanctuary"
 
-describe("Synchronous piping with 'pipe'", () => {
-    it("calculation should return 10", () => {
+describe( "Synchronous piping with 'pipe'", () => {
+    it( "calculation should return 10", () => {
         const
-            sum = (x, y) => x + y,
+            sum = ( x, y ) => x + y,
             divideBy2 = x => x / 2,
             multiplyBy4 = x => x * 4,
 
-            calc = pipe(function* () {
+            calc = pipe( function* () {
                 yield sum
                 yield divideBy2
                 yield multiplyBy4
-            }),
+            } ),
 
-            result = calc(3, 2)
+            result = calc( 3, 2 )
 
-        expect(result).toBe(10)
-    })
+        expect( result ).toBe( 10 )
+    } )
 
-    it("can do calculation with subpiping and return 1000", () => {
+    it( "can do calculation with subpiping and return 1000", () => {
         const
-            sum = (x, y) => x + y,
+            sum = ( x, y ) => x + y,
             divideBy2 = x => x / 2,
             multiplyBy4 = x => x * 4,
             multiplyBy10 = x => x * 10,
 
-            calc = pipe(function* () {
+            calc = pipe( function* () {
                 yield sum
                 yield (
                     yield divideBy2,
@@ -36,24 +38,24 @@ describe("Synchronous piping with 'pipe'", () => {
                         yield multiplyBy10
                     )
                 )
-            }),
+            } ),
 
-            result = calc(3, 2)
+            result = calc( 3, 2 )
 
-        expect(result).toBe(1000)
-    })
+        expect( result ).toBe( 1000 )
+    } )
 
-    it("can intercept", () => {
+    it( "can intercept", () => {
         let interceptEnter = false,
             interceptExit = false
 
         pipe[interceptors] = [{
-            enter: (funOrValue, args) => {
+            enter: ( funOrValue, args ) => {
                 interceptEnter = true
 
                 return { funOrValue, args }
             },
-            exit: (funOrValue, args, result) => {
+            exit: ( funOrValue, args, result ) => {
                 interceptExit = true
 
                 return result
@@ -61,51 +63,72 @@ describe("Synchronous piping with 'pipe'", () => {
         }]
 
         const
-            sum = (x, y) => x + y,
+            sum = ( x, y ) => x + y,
             divideBy2 = x => x / 2,
             multiplyBy4 = x => x * 4,
 
-            calc = pipe(function* () {
+            calc = pipe( function* () {
                 yield sum
                 yield divideBy2
                 yield multiplyBy4
-            }),
+            } ),
 
-            result = calc(3, 2)
+            result = calc( 3, 2 )
 
-        expect(result).toBe(10)
-        expect(interceptEnter).toBe(true)
-        expect(interceptExit).toBe(true)
-    })
-})
+        expect( result ).toBe( 10 )
+        expect( interceptEnter ).toBe( true )
+        expect( interceptExit ).toBe( true )
+    } )
+} )
 
-describe("Asynchronous piping with 'pipeP'", () => {
-    it("calculation should return 10", done => {
+describe( "Monadic piping", () => {
+    it( "calculation should return 10", done => {
         const
-            sumAsync = (x, y) => Promise.resolve(x + y),
-            divideBy2Async = x => Promise.resolve(x / 2),
-            multiplyBy4Async = x => Promise.resolve(x * 4),
+            sum = ( x, y ) => S.Right( x + y ),
+            divideBy2 = x => S.Right( x / 2 ),
+            multiplyBy4 = x => S.Right( x * 4 ),
 
-            calcAsync = pipe(function* () {
+            calc = pipe( function* () {
+                yield sum
+                yield divideBy2
+                yield multiplyBy4
+            } )
+
+        chain( result => {
+            debugger
+            expect( result ).toBe( 10 )
+            done()
+        } )( calc( 3, 2 ) )
+    } )
+} )
+
+describe( "Asynchronous piping", () => {
+    it( "calculation should return 10", done => {
+        const
+            sumAsync = ( x, y ) => Promise.resolve( x + y ),
+            divideBy2Async = x => Promise.resolve( x / 2 ),
+            multiplyBy4Async = x => Promise.resolve( x * 4 ),
+
+            calcAsync = pipe( function* () {
                 yield sumAsync
                 yield divideBy2Async
                 yield multiplyBy4Async
-            })
+            } )
 
-        calcAsync(3, 2).then(result => {
-            expect(result).toBe(10)
+        calcAsync( 3, 2 ).then( result => {
+            expect( result ).toBe( 10 )
             done()
-        })
-    })
+        } )
+    } )
 
-    it("can do calculation with subpiping and return 1000", done => {
+    it( "can do calculation with subpiping and return 1000", done => {
         const
-            sumAsync = (x, y) => Promise.resolve(x + y),
-            divideBy2Async = x => Promise.resolve(x / 2),
-            multiplyBy4Async = x => Promise.resolve(x * 4),
-            multiplyBy10Async = x => Promise.resolve(x * 10),
+            sumAsync = ( x, y ) => Promise.resolve( x + y ),
+            divideBy2Async = x => Promise.resolve( x / 2 ),
+            multiplyBy4Async = x => Promise.resolve( x * 4 ),
+            multiplyBy10Async = x => Promise.resolve( x * 10 ),
 
-            calcAsync = pipe(function* () {
+            calcAsync = pipe( function* () {
                 yield sumAsync
                 yield (
                     yield divideBy2Async,
@@ -115,35 +138,35 @@ describe("Asynchronous piping with 'pipeP'", () => {
                         yield multiplyBy10Async
                     )
                 )
-            })
+            } )
 
-        calcAsync(3, 2).then(result => {
-            expect(result).toBe(1000)
+        calcAsync( 3, 2 ).then( result => {
+            expect( result ).toBe( 1000 )
             done()
-        })
-    })
-})
+        } )
+    } )
+} )
 
-describe("Mixed synchronous and asynchronous piping", () => {
-    it("always return a promise and the expected result of 10", () => {
+describe( "Mixed synchronous and asynchronous piping", () => {
+    it( "always return a promise and the expected result of 10", () => {
         const
-            sumAsync = (x, y) => Promise.resolve(x + y),
+            sumAsync = ( x, y ) => Promise.resolve( x + y ),
             divideBy2 = x => x / 2,
-            multiplyBy4Async = x => Promise.resolve(x * 4),
+            multiplyBy4Async = x => Promise.resolve( x * 4 ),
 
-            calcAsync = pipe(function* () {
+            calcAsync = pipe( function* () {
                 yield sumAsync
                 yield multiplyBy4Async
                 yield divideBy2
-            }),
+            } ),
 
-            result = calcAsync(3, 2)
+            result = calcAsync( 3, 2 )
 
-        expect(result instanceof Promise).toBeTruthy()
+        expect( result instanceof Promise ).toBeTruthy()
 
-        result.then(result => {
-            expect(result).toBe(10)
+        result.then( result => {
+            expect( result ).toBe( 10 )
             done()
-        })
-    })
-})
+        } )
+    } )
+} )
